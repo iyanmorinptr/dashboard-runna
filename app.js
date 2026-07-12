@@ -8,19 +8,27 @@ const PAKET = [6, 8, 14, 20, 25];
 const STORAGE_KEY = 'runnaKitchen';
 const LOW_STOCK = 25; // pcs — di bawah ini dianggap menipis
 
+const HARGA_AWAL = { 6: 25000, 8: 33000, 14: 55000, 20: 75000, 25: 90000 };
 const defaultState = () => ({
   stock: 0,       // total stok dimsum (pcs), tidak dipisah per varian saus
   stockLog: [],   // {id, waktu, delta, ket}
   orders: [],     // {id, nama, tglPesan, tglAmbil, varian, paket, qty, harga, status}
   finance: [],    // {id, tanggal, tipe, kategori, keterangan, jumlah, orderId?}
-  harga: { 6: 25000, 8: 33000, 14: 55000, 20: 75000, 25: 90000 },
+  harga: Object.fromEntries(VARIAN.map((v) => [v, { ...HARGA_AWAL }])), // per varian per paket
 });
 
-// data lama menyimpan stok per varian ({Mentai: n, ...}) — jumlahkan jadi satu angka
+// migrasi bentuk data lama
 function normalizeState(s) {
+  // stok per varian ({Mentai: n, ...}) — jumlahkan jadi satu angka
   if (s.stock && typeof s.stock === 'object') {
     s.stock = Object.values(s.stock).reduce((a, n) => a + (Number(n) || 0), 0);
   }
+  // harga lama flat per paket ({6: 25000, ...}) — salin ke tiap varian
+  if (s.harga && typeof Object.values(s.harga)[0] !== 'object') {
+    const lama = s.harga;
+    s.harga = Object.fromEntries(VARIAN.map((v) => [v, { ...lama }]));
+  }
+  VARIAN.forEach((v) => { if (!s.harga[v]) s.harga[v] = { ...HARGA_AWAL }; });
   return s;
 }
 
@@ -174,6 +182,18 @@ const monthLabelLong = (key) => {
   return new Date(y, m - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
 };
 
+/* ---------- input harga berformat "Rp 25.000" ---------- */
+const fmtRpInput = (n) => (n ? 'Rp ' + Number(n).toLocaleString('id-ID') : '');
+const parseRp = (str) => Number(String(str || '').replace(/\D/g, '')) || 0;
+function attachRpFormat(input) {
+  if (input.dataset.rp) return;
+  input.dataset.rp = '1';
+  input.addEventListener('input', () => {
+    const digits = input.value.replace(/\D/g, '');
+    input.value = digits ? 'Rp ' + Number(digits).toLocaleString('id-ID') : '';
+  });
+}
+
 function toast(msg) {
   const el = document.getElementById('toast');
   el.textContent = msg;
@@ -222,13 +242,18 @@ function showWelcome() {
 document.getElementById('finance-form').addEventListener('submit', (e) => {
   e.preventDefault();
   const f = new FormData(e.target);
+  const jumlah = parseRp(f.get('jumlah'));
+  if (!jumlah) {
+    toast('Isi jumlah transaksinya dulu');
+    return;
+  }
   state.finance.push({
     id: uid(),
     tanggal: f.get('tanggal'),
     tipe: f.get('tipe'),
     kategori: f.get('kategori'),
     keterangan: f.get('keterangan') || '-',
-    jumlah: Number(f.get('jumlah')),
+    jumlah,
   });
   save();
   e.target.reset();
@@ -485,12 +510,16 @@ function renderStock() {
 const orderForm = document.getElementById('order-form');
 
 function syncHargaField() {
+  const varian = orderForm.varian.value;
   const paket = orderForm.paket.value;
   const qty = Number(orderForm.qty.value) || 1;
-  orderForm.harga.value = (state.harga[paket] || 0) * qty;
+  const hargaPaket = (state.harga[varian] && state.harga[varian][paket]) || 0;
+  orderForm.harga.value = fmtRpInput(hargaPaket * qty);
 }
+orderForm.varian.addEventListener('change', syncHargaField);
 orderForm.paket.addEventListener('change', syncHargaField);
 orderForm.qty.addEventListener('input', syncHargaField);
+attachRpFormat(orderForm.harga);
 
 orderForm.addEventListener('submit', (e) => {
   e.preventDefault();
@@ -504,7 +533,7 @@ orderForm.addEventListener('submit', (e) => {
     varian: f.get('varian'),
     paket: Number(f.get('paket')),
     qty: Number(f.get('qty')),
-    harga: Number(f.get('harga')),
+    harga: parseRp(f.get('harga')),
     status: 'Baru',
   };
   // stok dimsum langsung terpotong begitu order masuk
@@ -811,20 +840,30 @@ async function sendBill(id) {
   }
 }
 
-/* ---------- harga default paket ---------- */
+/* ---------- Products: harga paket per varian ---------- */
 function renderPriceForm() {
   const form = document.getElementById('price-form');
   form.innerHTML =
-    PAKET.map(
-      (p) => `<label>Paket ${p} pcs
-        <input type="number" min="0" step="500" name="p${p}" value="${state.harga[p]}"></label>`
-    ).join('') + '<label>&nbsp;<button type="submit" class="btn primary">Simpan Harga</button></label>';
+    VARIAN.map(
+      (v) => `<div class="produk-group">
+        <h3>Dimsum ${v}</h3>
+        <div class="price-grid">
+          ${PAKET.map(
+            (p) => `<label>Paket ${p} pcs
+              <input type="text" inputmode="numeric" data-varian="${v}" data-paket="${p}" value="${fmtRpInput(state.harga[v][p])}"></label>`
+          ).join('')}
+        </div>
+      </div>`
+    ).join('') + '<button type="submit" class="btn primary">Simpan Harga</button>';
+  form.querySelectorAll('input[data-varian]').forEach(attachRpFormat);
   form.onsubmit = (e) => {
     e.preventDefault();
-    PAKET.forEach((p) => (state.harga[p] = Number(form[`p${p}`].value) || 0));
+    form.querySelectorAll('input[data-varian]').forEach((inp) => {
+      state.harga[inp.dataset.varian][inp.dataset.paket] = parseRp(inp.value);
+    });
     save();
     syncHargaField();
-    toast('Harga default tersimpan');
+    toast('Harga produk tersimpan — otomatis dipakai di form order');
   };
 }
 
@@ -840,6 +879,7 @@ function renderAll() {
 }
 
 document.querySelector('#finance-form [name=tanggal]').value = todayISO();
+attachRpFormat(document.querySelector('#finance-form [name=jumlah]'));
 orderForm.tglPesan.value = todayISO();
 syncHargaField();
 renderPriceForm();

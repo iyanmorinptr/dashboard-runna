@@ -344,13 +344,21 @@ tr:hover td { background: var(--ghost-hover); }
 .stock-status.out { color: var(--status-critical); }
 .stock-status.out .sdot { background: var(--status-critical); }
 
-/* ---------- price grid ---------- */
+/* ---------- price grid (Products) ---------- */
 .price-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 10px 12px;
 }
 .price-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-secondary); }
+.produk-group { margin-bottom: 18px; }
+.produk-group h3 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--brand);
+  border-bottom: 1px solid var(--grid-line);
+  padding-bottom: 6px;
+}
 
 /* ---------- chart ---------- */
 .chart-wrap { position: relative; }
