@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Runna Kitchen — Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥟</text></svg>">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-icon">🥟</span>
+      <div>
+        <h1>Runna Kitchen</h1>
+        <p>Dashboard Dimsum — Mentai · Truffle · Bolognese</p>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="finance" role="tab" aria-selected="true">💰 Finance</button>
+      <button class="tab" data-tab="stock" role="tab" aria-selected="false">📦 Stock</button>
+      <button class="tab" data-tab="orders" role="tab" aria-selected="false">🧾 Orderan</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ============ FINANCE ============ -->
+    <section id="tab-finance" class="tab-panel active" role="tabpanel">
+      <div class="kpi-row" id="finance-kpis"></div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head">
+            <h2>Pemasukan vs Pengeluaran</h2>
+            <span class="card-sub">6 bulan terakhir</span>
+          </div>
+          <div id="finance-chart" class="chart-wrap"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>Catat Transaksi</h2></div>
+          <form id="finance-form" class="form-grid">
+            <label>Tipe
+              <select name="tipe" required>
+                <option value="pemasukan">Pemasukan</option>
+                <option value="pengeluaran">Pengeluaran</option>
+              </select>
+            </label>
+            <label>Tanggal
+              <input type="date" name="tanggal" required>
+            </label>
+            <label>Kategori
+              <select name="kategori">
+                <option>Penjualan</option>
+                <option>Bahan Baku</option>
+                <option>Kemasan</option>
+                <option>Operasional</option>
+                <option>Lainnya</option>
+              </select>
+            </label>
+            <label>Jumlah (Rp)
+              <input type="number" name="jumlah" min="1" placeholder="cth: 50000" required>
+            </label>
+            <label class="span-2">Keterangan
+              <input type="text" name="keterangan" placeholder="cth: beli kulit dimsum">
+            </label>
+            <button type="submit" class="btn primary span-2">Simpan Transaksi</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Laporan Penjualan</h2>
+          <select id="report-month" class="month-select"></select>
+        </div>
+        <div id="sales-report"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>Riwayat Transaksi</h2></div>
+        <div class="table-scroll">
+          <table id="finance-table">
+            <thead>
+              <tr><th>Tanggal</th><th>Tipe</th><th>Kategori</th><th>Keterangan</th><th class="num">Jumlah</th><th></th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ STOCK ============ -->
+    <section id="tab-stock" class="tab-panel" role="tabpanel">
+      <div class="stock-cards" id="stock-cards"></div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head"><h2>Penyesuaian Stok</h2><span class="card-sub">produksi baru / koreksi</span></div>
+          <form id="stock-form" class="form-grid">
+            <label>Varian
+              <select name="varian" required>
+                <option>Mentai</option>
+                <option>Truffle</option>
+                <option>Bolognese</option>
+              </select>
+            </label>
+            <label>Aksi
+              <select name="aksi">
+                <option value="tambah">Tambah stok</option>
+                <option value="kurangi">Kurangi stok</option>
+              </select>
+            </label>
+            <label>Jumlah (pcs)
+              <input type="number" name="jumlah" min="1" placeholder="cth: 50" required>
+            </label>
+            <label>Keterangan
+              <input type="text" name="keterangan" placeholder="cth: produksi pagi">
+            </label>
+            <button type="submit" class="btn primary span-2">Simpan</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>Riwayat Pergerakan Stok</h2></div>
+          <div class="table-scroll">
+            <table id="stock-log-table">
+              <thead><tr><th>Waktu</th><th>Varian</th><th class="num">Perubahan</th><th>Keterangan</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ORDERS ============ -->
+    <section id="tab-orders" class="tab-panel" role="tabpanel">
+      <div class="kpi-row" id="order-kpis"></div>
+
+      <div class="card">
+        <div class="card-head"><h2>Orderan Masuk</h2><span class="card-sub">nama · tgl pesanan · tgl pengambilan · jenis pesanan</span></div>
+        <form id="order-form" class="form-grid order-form">
+          <label>Nama Pemesan
+            <input type="text" name="nama" placeholder="cth: Bu Sari" required>
+          </label>
+          <label>Tgl Pesanan
+            <input type="date" name="tglPesan" required>
+          </label>
+          <label>Tgl Pengambilan
+            <input type="date" name="tglAmbil" required>
+          </label>
+          <label>Varian
+            <select name="varian" required>
+              <option>Mentai</option>
+              <option>Truffle</option>
+              <option>Bolognese</option>
+            </select>
+          </label>
+          <label>Paket
+            <select name="paket" required>
+              <option value="6">6 pcs</option>
+              <option value="8">8 pcs</option>
+              <option value="14">14 pcs</option>
+              <option value="20">20 pcs</option>
+              <option value="25">25 pcs</option>
+            </select>
+          </label>
+          <label>Jumlah Paket
+            <input type="number" name="qty" min="1" value="1" required>
+          </label>
+          <label>Harga Total (Rp)
+            <input type="number" name="harga" min="0" required>
+          </label>
+          <button type="submit" class="btn primary">Tambah Orderan</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Daftar Orderan</h2>
+          <div class="filter-row" id="order-filter">
+            <button class="chip active" data-status="semua">Semua</button>
+            <button class="chip" data-status="Baru">Baru</button>
+            <button class="chip" data-status="Selesai">Selesai</button>
+            <button class="chip" data-status="Batal">Batal</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table id="order-table">
+            <thead>
+              <tr><th>Nama</th><th>Tgl Pesanan</th><th>Tgl Pengambilan</th><th>Jenis Pesanan</th><th class="num">Total pcs</th><th class="num">Harga</th><th>Status</th><th>Aksi</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>Harga Default Paket</h2><span class="card-sub">dipakai untuk mengisi harga otomatis di form</span></div>
+        <form id="price-form" class="price-grid"></form>
+      </div>
+    </section>
+  </main>
+
+  <div id="tooltip" class="tooltip" hidden></div>
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
