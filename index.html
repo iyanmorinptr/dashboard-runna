@@ -4,31 +4,50 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Runna Kitchen — Dashboard</title>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥟</text></svg>">
+  <link rel="stylesheet" href="styles.css?v=4">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23a2502c'/%3E%3Ctext x='32' y='44' font-family='system-ui,sans-serif' font-size='34' font-weight='800' fill='%23fff' text-anchor='middle'%3ER.%3C/text%3E%3C/svg%3E">
 </head>
 <body>
   <header class="topbar">
-    <div class="brand">
-      <span class="brand-icon">🥟</span>
-      <div>
-        <h1>Runna Kitchen</h1>
-        <p>Dashboard Dimsum — Mentai · Truffle · Bolognese</p>
-      </div>
-    </div>
-    <nav class="tabs" role="tablist">
-      <button class="tab active" data-tab="finance" role="tab" aria-selected="true">💰 Finance</button>
-      <button class="tab" data-tab="stock" role="tab" aria-selected="false">📦 Stock</button>
-      <button class="tab" data-tab="orders" role="tab" aria-selected="false">🧾 Orderan</button>
-      <span id="cloud-badge" class="cloud-badge" hidden></span>
-      <button id="logout-btn" class="btn small" hidden>Keluar</button>
-    </nav>
+    <button id="menu-btn" class="icon-btn" aria-label="Buka menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    <div class="wordmark"><span class="runna">RUNNA<span>.</span></span><span class="kitchen">KITCHEN</span></div>
+    <div class="spacer"></div>
+    <span id="cloud-badge" class="cloud-badge" hidden><span class="dot"></span><span class="cb-text"></span></span>
   </header>
 
+  <div id="drawer-backdrop" class="drawer-backdrop" hidden></div>
+  <aside id="drawer" class="drawer" aria-label="Menu utama">
+    <div class="drawer-head">
+      <div class="wordmark"><span class="runna">RUNNA<span>.</span></span><span class="kitchen">KITCHEN</span></div>
+      <div class="tagline">Dashboard Dimsum — Mentai · Truffle · Bolognese</div>
+    </div>
+    <nav>
+      <button class="drawer-item active" data-tab="orders">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h6M9 5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/><path d="M9.5 11h5M9.5 15h5"/></svg>
+        Orderan
+      </button>
+      <button class="drawer-item" data-tab="finance">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16"/><path d="M8 15l3.5-4 2.5 2 4.5-5.5"/></svg>
+        Finance
+      </button>
+      <button class="drawer-item" data-tab="stock">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8.5L12 4 3 8.5v7L12 20l9-4.5v-7z"/><path d="M3 8.5l9 4.5 9-4.5M12 13v7"/></svg>
+        Stock
+      </button>
+    </nav>
+    <div class="drawer-foot">
+      <button id="logout-btn" class="drawer-item" hidden>
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
+        Keluar
+      </button>
+    </div>
+  </aside>
+
   <div id="login-overlay" class="login-overlay" hidden>
+    <div class="wordmark"><span class="runna">RUNNA<span>.</span></span><span class="kitchen">KITCHEN</span></div>
     <form id="login-form" class="login-card">
-      <div class="login-icon">🥟</div>
-      <h2>Runna Kitchen</h2>
       <p>Masuk untuk membuka dashboard</p>
       <input type="email" name="email" placeholder="Email" autocomplete="username" required>
       <input type="password" name="password" placeholder="Kata sandi" autocomplete="current-password" required>
@@ -37,9 +56,84 @@
     </form>
   </div>
 
+  <div id="welcome" class="welcome" hidden>
+    <div class="wordmark"><span class="runna">RUNNA<span>.</span></span><span class="kitchen">KITCHEN</span></div>
+    <p>Welcome to Runna Dashboard</p>
+  </div>
+
   <main>
+    <!-- ============ ORDERS (halaman utama) ============ -->
+    <section id="tab-orders" class="tab-panel active" role="tabpanel">
+      <h1 class="page-heading">Orderan</h1>
+      <div class="kpi-row" id="order-kpis"></div>
+
+      <div class="card">
+        <div class="card-head"><h2>Orderan Masuk</h2><span class="card-sub">nama · tgl pesanan · tgl pengambilan · jenis pesanan</span></div>
+        <form id="order-form" class="form-grid order-form">
+          <label>Nama Pemesan
+            <input type="text" name="nama" placeholder="cth: Bu Sari" required>
+          </label>
+          <label>Tgl Pesanan
+            <input type="date" name="tglPesan" required>
+          </label>
+          <label>Tgl Pengambilan
+            <input type="date" name="tglAmbil" required>
+          </label>
+          <label>Varian
+            <select name="varian" required>
+              <option>Mentai</option>
+              <option>Truffle</option>
+              <option>Bolognese</option>
+            </select>
+          </label>
+          <label>Paket
+            <select name="paket" required>
+              <option value="6">6 pcs</option>
+              <option value="8">8 pcs</option>
+              <option value="14">14 pcs</option>
+              <option value="20">20 pcs</option>
+              <option value="25">25 pcs</option>
+            </select>
+          </label>
+          <label>Jumlah Paket
+            <input type="number" name="qty" min="1" value="1" required>
+          </label>
+          <label>Harga Total (Rp)
+            <input type="number" name="harga" min="0" required>
+          </label>
+          <button type="submit" class="btn primary">Tambah Orderan</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Daftar Orderan</h2>
+          <div class="filter-row" id="order-filter">
+            <button class="chip active" data-status="semua">Semua</button>
+            <button class="chip" data-status="Baru">Baru</button>
+            <button class="chip" data-status="Selesai">Selesai</button>
+            <button class="chip" data-status="Batal">Batal</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table id="order-table">
+            <thead>
+              <tr><th>Nama</th><th>Tgl Pesanan</th><th>Tgl Pengambilan</th><th>Jenis Pesanan</th><th class="num">Total pcs</th><th class="num">Harga</th><th>Status</th><th>Aksi</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>Harga Default Paket</h2><span class="card-sub">dipakai untuk mengisi harga otomatis di form</span></div>
+        <form id="price-form" class="price-grid"></form>
+      </div>
+    </section>
+
     <!-- ============ FINANCE ============ -->
-    <section id="tab-finance" class="tab-panel active" role="tabpanel">
+    <section id="tab-finance" class="tab-panel" role="tabpanel">
+      <h1 class="page-heading">Finance</h1>
       <div class="kpi-row" id="finance-kpis"></div>
 
       <div class="grid-2">
@@ -106,6 +200,7 @@
 
     <!-- ============ STOCK ============ -->
     <section id="tab-stock" class="tab-panel" role="tabpanel">
+      <h1 class="page-heading">Stock</h1>
       <div class="stock-cards" id="stock-cards"></div>
 
       <div class="grid-2">
@@ -146,81 +241,13 @@
         </div>
       </div>
     </section>
-
-    <!-- ============ ORDERS ============ -->
-    <section id="tab-orders" class="tab-panel" role="tabpanel">
-      <div class="kpi-row" id="order-kpis"></div>
-
-      <div class="card">
-        <div class="card-head"><h2>Orderan Masuk</h2><span class="card-sub">nama · tgl pesanan · tgl pengambilan · jenis pesanan</span></div>
-        <form id="order-form" class="form-grid order-form">
-          <label>Nama Pemesan
-            <input type="text" name="nama" placeholder="cth: Bu Sari" required>
-          </label>
-          <label>Tgl Pesanan
-            <input type="date" name="tglPesan" required>
-          </label>
-          <label>Tgl Pengambilan
-            <input type="date" name="tglAmbil" required>
-          </label>
-          <label>Varian
-            <select name="varian" required>
-              <option>Mentai</option>
-              <option>Truffle</option>
-              <option>Bolognese</option>
-            </select>
-          </label>
-          <label>Paket
-            <select name="paket" required>
-              <option value="6">6 pcs</option>
-              <option value="8">8 pcs</option>
-              <option value="14">14 pcs</option>
-              <option value="20">20 pcs</option>
-              <option value="25">25 pcs</option>
-            </select>
-          </label>
-          <label>Jumlah Paket
-            <input type="number" name="qty" min="1" value="1" required>
-          </label>
-          <label>Harga Total (Rp)
-            <input type="number" name="harga" min="0" required>
-          </label>
-          <button type="submit" class="btn primary">Tambah Orderan</button>
-        </form>
-      </div>
-
-      <div class="card">
-        <div class="card-head">
-          <h2>Daftar Orderan</h2>
-          <div class="filter-row" id="order-filter">
-            <button class="chip active" data-status="semua">Semua</button>
-            <button class="chip" data-status="Baru">Baru</button>
-            <button class="chip" data-status="Selesai">Selesai</button>
-            <button class="chip" data-status="Batal">Batal</button>
-          </div>
-        </div>
-        <div class="table-scroll">
-          <table id="order-table">
-            <thead>
-              <tr><th>Nama</th><th>Tgl Pesanan</th><th>Tgl Pengambilan</th><th>Jenis Pesanan</th><th class="num">Total pcs</th><th class="num">Harga</th><th>Status</th><th>Aksi</th></tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-head"><h2>Harga Default Paket</h2><span class="card-sub">dipakai untuk mengisi harga otomatis di form</span></div>
-        <form id="price-form" class="price-grid"></form>
-      </div>
-    </section>
   </main>
 
   <div id="tooltip" class="tooltip" hidden></div>
   <div id="toast" class="toast" hidden></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js"></script>
-  <script src="app.js"></script>
+  <script src="supabase.min.js?v=4"></script>
+  <script src="config.js?v=4"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>
