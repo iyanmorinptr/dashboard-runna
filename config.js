@@ -9,5 +9,5 @@
    "Sinkronisasi antar perangkat".
    ============================================================ */
 
-const SUPABASE_URL = '';      // cth: 'https://abcdefgh.supabase.co'
-const SUPABASE_ANON_KEY = ''; // kunci "anon public" dari menu Settings -> API Keys
+const SUPABASE_URL = 'sb_publishable_P0LlBga1dImm9065BwV2Xw_7dbXApOd';      // cth: 'https://abcdefgh.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'; // kunci "anon public" dari menu Settings -> API Keys
