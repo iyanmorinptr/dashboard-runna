@@ -19,6 +19,99 @@ const defaultState = () => ({
 let state = load();
 let orderFilter = 'semua';
 
+/* ---------- sinkronisasi cloud (opsional, lihat config.js) ---------- */
+const cloudEnabled =
+  typeof SUPABASE_URL !== 'undefined' && SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase;
+const db = cloudEnabled ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+let cloudReady = false;
+
+function setCloudBadge(ok) {
+  const el = document.getElementById('cloud-badge');
+  el.hidden = false;
+  el.className = 'cloud-badge ' + (ok ? 'ok' : 'err');
+  el.textContent = ok ? '☁️ Tersinkron' : '⚠️ Gagal sinkron';
+}
+
+async function pullCloud() {
+  const { data, error } = await db.from('app_state').select('data').eq('id', 1).maybeSingle();
+  if (error) {
+    setCloudBadge(false);
+    toast('Gagal mengambil data dari cloud — coba muat ulang halaman');
+    return;
+  }
+  if (data && data.data) {
+    state = Object.assign(defaultState(), data.data);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } else {
+    // belum ada data di cloud: unggah data perangkat ini sebagai awal
+    await db.from('app_state').upsert({ id: 1, data: state });
+  }
+  setCloudBadge(true);
+}
+
+let pushTimer;
+function pushCloud() {
+  if (!cloudReady) return;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(async () => {
+    const { error } = await db
+      .from('app_state')
+      .upsert({ id: 1, data: state, updated_at: new Date().toISOString() });
+    setCloudBadge(!error);
+    if (error) toast('Gagal sinkron ke cloud — data tetap tersimpan di perangkat ini');
+  }, 400);
+}
+
+async function afterLogin() {
+  document.getElementById('login-overlay').hidden = true;
+  document.getElementById('logout-btn').hidden = false;
+  await pullCloud();
+  cloudReady = true;
+  renderPriceForm();
+  syncHargaField();
+  renderAll();
+}
+
+async function initCloud() {
+  const { data } = await db.auth.getSession();
+  if (data && data.session) {
+    afterLogin();
+  } else {
+    document.getElementById('login-overlay').hidden = false;
+  }
+}
+
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const errEl = document.getElementById('login-error');
+  errEl.hidden = true;
+  const { error } = await db.auth.signInWithPassword({
+    email: f.get('email'),
+    password: f.get('password'),
+  });
+  if (error) {
+    errEl.textContent = 'Email atau kata sandi salah';
+    errEl.hidden = false;
+    return;
+  }
+  afterLogin();
+});
+
+document.getElementById('logout-btn').addEventListener('click', async () => {
+  if (!confirm('Keluar dari dashboard?')) return;
+  await db.auth.signOut();
+  location.reload();
+});
+
+// saat kembali ke tab/aplikasi, ambil data terbaru dari cloud
+window.addEventListener('focus', async () => {
+  if (cloudReady) {
+    await pullCloud();
+    renderAll();
+  }
+});
+
 function load() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -30,6 +123,7 @@ function load() {
 }
 function save() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  pushCloud();
 }
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -539,3 +633,4 @@ orderForm.tglPesan.value = todayISO();
 syncHargaField();
 renderPriceForm();
 renderAll();
+if (cloudEnabled) initCloud();

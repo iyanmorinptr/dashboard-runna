@@ -289,6 +289,46 @@ tr:hover td { background: var(--ghost-hover); }
 .tooltip .tt-row { display: flex; justify-content: space-between; gap: 14px; }
 .tooltip .tt-row .val { font-variant-numeric: tabular-nums; font-weight: 600; }
 
+/* ---------- login & cloud sync ---------- */
+.login-overlay[hidden] { display: none; }
+.login-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--page);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.login-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px 28px;
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: center;
+}
+.login-card .login-icon { font-size: 44px; }
+.login-card h2 { margin: 0; font-size: 18px; }
+.login-card p { margin: 0 0 8px; font-size: 13px; color: var(--text-secondary); }
+.login-error { color: var(--status-critical); font-size: 12px; margin: 4px 0 0; }
+
+.cloud-badge {
+  align-self: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 0 8px;
+  white-space: nowrap;
+}
+.cloud-badge.ok { color: var(--delta-good); }
+.cloud-badge.err { color: var(--status-critical); }
+.tabs { align-items: center; }
+
 /* ---------- toast ---------- */
 .toast {
   position: fixed;

@@ -24,9 +24,41 @@ Dashboard untuk usaha dimsum **Runna Kitchen** (Mentai · Truffle · Bolognese).
   Order tidak bisa diselesaikan jika stok kurang.
 
 ## Teknologi
-HTML + CSS + JavaScript murni, tanpa server. Data tersimpan di **localStorage browser**
-(data melekat di browser/perangkat yang dipakai — hapus data browser = data hilang,
-jadi pakai satu perangkat yang sama untuk pencatatan).
+HTML + CSS + JavaScript murni, tanpa server. Secara bawaan data tersimpan di
+**localStorage browser** (melekat di perangkat). Untuk data yang sama di semua
+perangkat, aktifkan sinkronisasi Supabase (lihat bawah).
+
+## 📱 Buka di HP
+1. Buka `https://USERNAME.github.io/NAMA-REPO/` di browser HP.
+2. Supaya seperti aplikasi: **iPhone (Safari)** → tombol Bagikan → *Add to Home
+   Screen*. **Android (Chrome)** → menu ⋮ → *Tambahkan ke layar utama*.
+
+## ☁️ Sinkronisasi antar perangkat (opsional, gratis)
+Tanpa langkah ini dashboard tetap jalan, tapi data HP dan laptop terpisah.
+Dengan Supabase, semua perangkat memakai satu data dan dashboard meminta login.
+
+1. Daftar di <https://supabase.com> (bisa login pakai Google) → **New project**
+   (nama bebas, misal `runna-kitchen`; database password bebas, simpan saja).
+2. Setelah proyek jadi, buka menu **SQL Editor** → New query → tempel seluruh isi
+   file `supabase-setup.sql` → **Run**.
+3. Buka menu **Authentication → Users → Add user → Create new user** → isi email
+   & kata sandi kamu sendiri (ini yang dipakai login di dashboard).
+   Lalu di **Authentication → Sign In / Up**, matikan *Allow new users to sign up*
+   supaya tidak ada orang lain bisa mendaftar.
+4. Buka **Project Settings → API Keys / Data API**: salin **Project URL** dan kunci
+   **anon public**.
+5. Edit file `config.js` di repo GitHub (klik file → ikon pensil), isi kedua nilai:
+   ```js
+   const SUPABASE_URL = 'https://xxxx.supabase.co';
+   const SUPABASE_ANON_KEY = 'eyJhbGci...';
+   ```
+   lalu **Commit changes**. Tunggu ±1 menit sampai Pages ter-update.
+6. Buka dashboard **di perangkat yang sudah berisi data** lebih dulu, login —
+   data perangkat itu otomatis terunggah ke cloud. Setelah itu login dari HP,
+   datanya langsung sama.
+
+Catatan: kunci *anon public* memang aman ditaruh di kode — akses data tetap
+dilindungi login karena aturan keamanan (RLS) yang dibuat `supabase-setup.sql`.
 
 ## Cara menjalankan
 Buka `index.html` di browser — selesai. Atau hosting gratis lewat GitHub Pages (lihat bawah).

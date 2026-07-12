@@ -20,8 +20,22 @@
       <button class="tab active" data-tab="finance" role="tab" aria-selected="true">💰 Finance</button>
       <button class="tab" data-tab="stock" role="tab" aria-selected="false">📦 Stock</button>
       <button class="tab" data-tab="orders" role="tab" aria-selected="false">🧾 Orderan</button>
+      <span id="cloud-badge" class="cloud-badge" hidden></span>
+      <button id="logout-btn" class="btn small" hidden>Keluar</button>
     </nav>
   </header>
+
+  <div id="login-overlay" class="login-overlay" hidden>
+    <form id="login-form" class="login-card">
+      <div class="login-icon">🥟</div>
+      <h2>Runna Kitchen</h2>
+      <p>Masuk untuk membuka dashboard</p>
+      <input type="email" name="email" placeholder="Email" autocomplete="username" required>
+      <input type="password" name="password" placeholder="Kata sandi" autocomplete="current-password" required>
+      <button class="btn primary" type="submit">Masuk</button>
+      <p id="login-error" class="login-error" hidden></p>
+    </form>
+  </div>
 
   <main>
     <!-- ============ FINANCE ============ -->
@@ -205,6 +219,8 @@
   <div id="tooltip" class="tooltip" hidden></div>
   <div id="toast" class="toast" hidden></div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
