@@ -1,4 +1,4 @@
-/* Runna Kitchen dashboard — tema brand terakota, light & dark */
+/* Runna Kitchen dashboard — tema brand terakota, background putih */
 :root {
   --brand: #a2502c;        /* terakota Runna Kitchen */
   --brand-strong: #8a4225;
@@ -23,30 +23,6 @@
   --header-bg: #a2502c;
   --header-ink: #ffffff;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --brand: #c9744c;
-    --brand-strong: #b9603a;
-    --brand-tint: #33241d;
-    --page: #14100e;
-    --surface-1: #1e1815;
-    --text-primary: #f7f2ee;
-    --text-secondary: #c8bcb3;
-    --text-muted: #91857c;
-    --grid-line: #322a25;
-    --baseline: #4a3f38;
-    --border: rgba(247, 242, 238, 0.10);
-    --series-in: #c9744c;
-    --series-out: #3987e5;
-    --status-warning: #fab219;
-    --delta-good: #0ca30c;
-    --accent: #b9603a;
-    --ghost-hover: rgba(201, 116, 76, 0.14);
-    --header-bg: #8a4225;
-    --header-ink: #ffffff;
-  }
-}
-
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 body {
