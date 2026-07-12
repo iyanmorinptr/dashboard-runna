@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Runna Kitchen — Dashboard</title>
-  <link rel="stylesheet" href="styles.css?v=4">
+  <link rel="stylesheet" href="styles.css?v=5">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23a2502c'/%3E%3Ctext x='32' y='44' font-family='system-ui,sans-serif' font-size='34' font-weight='800' fill='%23fff' text-anchor='middle'%3ER.%3C/text%3E%3C/svg%3E">
 </head>
 <body>
@@ -26,7 +26,7 @@
     <nav>
       <button class="drawer-item active" data-tab="orders">
         <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h6M9 5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/><path d="M9.5 11h5M9.5 15h5"/></svg>
-        Orderan
+        Order
       </button>
       <button class="drawer-item" data-tab="finance">
         <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16"/><path d="M8 15l3.5-4 2.5 2 4.5-5.5"/></svg>
@@ -64,14 +64,17 @@
   <main>
     <!-- ============ ORDERS (halaman utama) ============ -->
     <section id="tab-orders" class="tab-panel active" role="tabpanel">
-      <h1 class="page-heading">Orderan</h1>
+      <h1 class="page-heading">Order</h1>
       <div class="kpi-row" id="order-kpis"></div>
 
       <div class="card">
-        <div class="card-head"><h2>Orderan Masuk</h2><span class="card-sub">nama · tgl pesanan · tgl pengambilan · jenis pesanan</span></div>
+        <div class="card-head"><h2>Order Masuk</h2><span class="card-sub">nama · tgl pesanan · tgl pengambilan · jenis pesanan</span></div>
         <form id="order-form" class="form-grid order-form">
           <label>Nama Pemesan
             <input type="text" name="nama" placeholder="cth: Bu Sari" required>
+          </label>
+          <label>No. WA Customer
+            <input type="tel" name="wa" placeholder="cth: 08123456789">
           </label>
           <label>Tgl Pesanan
             <input type="date" name="tglPesan" required>
@@ -101,13 +104,13 @@
           <label>Harga Total (Rp)
             <input type="number" name="harga" min="0" required>
           </label>
-          <button type="submit" class="btn primary">Tambah Orderan</button>
+          <button type="submit" class="btn primary">Tambah Order</button>
         </form>
       </div>
 
       <div class="card">
         <div class="card-head">
-          <h2>Daftar Orderan</h2>
+          <h2>Daftar Order</h2>
           <div class="filter-row" id="order-filter">
             <button class="chip active" data-status="semua">Semua</button>
             <button class="chip" data-status="Baru">Baru</button>
@@ -207,13 +210,6 @@
         <div class="card">
           <div class="card-head"><h2>Penyesuaian Stok</h2><span class="card-sub">produksi baru / koreksi</span></div>
           <form id="stock-form" class="form-grid">
-            <label>Varian
-              <select name="varian" required>
-                <option>Mentai</option>
-                <option>Truffle</option>
-                <option>Bolognese</option>
-              </select>
-            </label>
             <label>Aksi
               <select name="aksi">
                 <option value="tambah">Tambah stok</option>
@@ -234,7 +230,7 @@
           <div class="card-head"><h2>Riwayat Pergerakan Stok</h2></div>
           <div class="table-scroll">
             <table id="stock-log-table">
-              <thead><tr><th>Waktu</th><th>Varian</th><th class="num">Perubahan</th><th>Keterangan</th></tr></thead>
+              <thead><tr><th>Waktu</th><th class="num">Perubahan</th><th>Keterangan</th></tr></thead>
               <tbody></tbody>
             </table>
           </div>
@@ -243,11 +239,17 @@
     </section>
   </main>
 
+  <footer class="app-footer">
+    <span>dashboard ini powered by</span>
+    <img src="mipo-logo.png" alt="MIPO Group">
+  </footer>
+
   <div id="tooltip" class="tooltip" hidden></div>
   <div id="toast" class="toast" hidden></div>
 
   <script src="supabase.min.js?v=4"></script>
+  <script src="jspdf.umd.min.js"></script>
   <script src="config.js?v=4"></script>
-  <script src="app.js?v=4"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>

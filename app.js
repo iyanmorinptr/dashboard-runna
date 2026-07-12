@@ -9,12 +9,20 @@ const STORAGE_KEY = 'runnaKitchen';
 const LOW_STOCK = 25; // pcs — di bawah ini dianggap menipis
 
 const defaultState = () => ({
-  stock: { Mentai: 0, Truffle: 0, Bolognese: 0 },
-  stockLog: [],   // {id, waktu, varian, delta, ket}
+  stock: 0,       // total stok dimsum (pcs), tidak dipisah per varian saus
+  stockLog: [],   // {id, waktu, delta, ket}
   orders: [],     // {id, nama, tglPesan, tglAmbil, varian, paket, qty, harga, status}
   finance: [],    // {id, tanggal, tipe, kategori, keterangan, jumlah, orderId?}
   harga: { 6: 25000, 8: 33000, 14: 55000, 20: 75000, 25: 90000 },
 });
+
+// data lama menyimpan stok per varian ({Mentai: n, ...}) — jumlahkan jadi satu angka
+function normalizeState(s) {
+  if (s.stock && typeof s.stock === 'object') {
+    s.stock = Object.values(s.stock).reduce((a, n) => a + (Number(n) || 0), 0);
+  }
+  return s;
+}
 
 let state = load();
 let orderFilter = 'semua';
@@ -60,7 +68,7 @@ async function pullCloud() {
     return;
   }
   if (data && data.data) {
-    state = Object.assign(defaultState(), data.data);
+    state = normalizeState(Object.assign(defaultState(), data.data));
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } else {
     // belum ada data di cloud: unggah data perangkat ini sebagai awal
@@ -137,7 +145,7 @@ function load() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaultState();
-    return Object.assign(defaultState(), JSON.parse(raw));
+    return normalizeState(Object.assign(defaultState(), JSON.parse(raw)));
   } catch {
     return defaultState();
   }
@@ -233,7 +241,7 @@ function deleteFinance(id) {
   const trx = state.finance.find((t) => t.id === id);
   if (!trx) return;
   if (trx.orderId) {
-    toast('Transaksi otomatis dari orderan — batalkan lewat tab Orderan');
+    toast('Transaksi otomatis dari order — batalkan/hapus ordernya lewat tab Order');
     return;
   }
   if (!confirm('Hapus transaksi ini?')) return;
@@ -421,46 +429,42 @@ function renderSalesReport() {
 document.getElementById('stock-form').addEventListener('submit', (e) => {
   e.preventDefault();
   const f = new FormData(e.target);
-  const varian = f.get('varian');
   const jumlah = Number(f.get('jumlah'));
   const delta = f.get('aksi') === 'tambah' ? jumlah : -jumlah;
-  if (state.stock[varian] + delta < 0) {
-    toast(`Stok ${varian} hanya ${state.stock[varian]} pcs — tidak bisa dikurangi ${jumlah}`);
+  if (state.stock + delta < 0) {
+    toast(`Stok dimsum hanya ${state.stock} pcs — tidak bisa dikurangi ${jumlah}`);
     return;
   }
-  state.stock[varian] += delta;
+  state.stock += delta;
   state.stockLog.unshift({
     id: uid(),
     waktu: new Date().toISOString(),
-    varian,
     delta,
     ket: f.get('keterangan') || (delta > 0 ? 'Penambahan stok' : 'Pengurangan stok'),
   });
   save();
   e.target.reset();
   renderAll();
-  toast(`Stok ${varian} ${delta > 0 ? '+' : ''}${delta} pcs`);
+  toast(`Stok dimsum ${delta > 0 ? '+' : ''}${delta} pcs`);
 });
 
 function renderStock() {
   const cards = document.getElementById('stock-cards');
-  cards.innerHTML = VARIAN.map((v) => {
-    const qty = state.stock[v];
-    const cap = Math.max(100, qty); // skala meter
-    const pct = Math.min(100, (qty / cap) * 100);
-    const status =
-      qty === 0
-        ? '<span class="stock-status out"><span class="sdot"></span>Habis</span>'
-        : qty < LOW_STOCK
-        ? '<span class="stock-status warn"><span class="sdot"></span>Stok menipis</span>'
-        : '<span class="stock-status ok"><span class="sdot"></span>Aman</span>';
-    return `<div class="stock-card">
-      <h3>Dimsum ${v}</h3>
-      <div class="stock-qty">${qty} <small>pcs</small></div>
-      <div class="meter"><span style="width:${pct}%"></span></div>
-      ${status}
-    </div>`;
-  }).join('');
+  const qty = state.stock;
+  const cap = Math.max(100, qty); // skala meter
+  const pct = Math.min(100, (qty / cap) * 100);
+  const status =
+    qty === 0
+      ? '<span class="stock-status out"><span class="sdot"></span>Habis</span>'
+      : qty < LOW_STOCK
+      ? '<span class="stock-status warn"><span class="sdot"></span>Stok menipis</span>'
+      : '<span class="stock-status ok"><span class="sdot"></span>Aman</span>';
+  cards.innerHTML = `<div class="stock-card">
+    <h3>Stok Dimsum</h3>
+    <div class="stock-qty">${qty} <small>pcs</small></div>
+    <div class="meter"><span style="width:${pct}%"></span></div>
+    ${status}
+  </div>`;
 
   const tbody = document.querySelector('#stock-log-table tbody');
   const rows = state.stockLog.slice(0, 30);
@@ -469,13 +473,12 @@ function renderStock() {
         .map(
           (l) => `<tr>
             <td>${new Date(l.waktu).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</td>
-            <td>${l.varian}</td>
             <td class="num"><span class="tipe-pill ${l.delta > 0 ? 'pemasukan' : 'pengeluaran'}">${l.delta > 0 ? '+' : ''}${l.delta} pcs</span></td>
             <td>${l.ket}</td>
           </tr>`
         )
         .join('')
-    : '<tr class="empty-row"><td colspan="4">Belum ada pergerakan stok</td></tr>';
+    : '<tr class="empty-row"><td colspan="3">Belum ada pergerakan stok</td></tr>';
 }
 
 /* ============================ ORDERS ============================ */
@@ -492,9 +495,10 @@ orderForm.qty.addEventListener('input', syncHargaField);
 orderForm.addEventListener('submit', (e) => {
   e.preventDefault();
   const f = new FormData(orderForm);
-  state.orders.unshift({
+  const order = {
     id: uid(),
     nama: f.get('nama').trim(),
+    wa: (f.get('wa') || '').trim(),
     tglPesan: f.get('tglPesan'),
     tglAmbil: f.get('tglAmbil'),
     varian: f.get('varian'),
@@ -502,33 +506,34 @@ orderForm.addEventListener('submit', (e) => {
     qty: Number(f.get('qty')),
     harga: Number(f.get('harga')),
     status: 'Baru',
-  });
+  };
+  state.orders.unshift(order);
   save();
   orderForm.reset();
   orderForm.tglPesan.value = todayISO();
   orderForm.qty.value = 1;
   syncHargaField();
   renderAll();
-  toast('Orderan ditambahkan');
+  toast('Order ditambahkan');
 });
 
 function completeOrder(id) {
   const o = state.orders.find((x) => x.id === id);
   if (!o || o.status !== 'Baru') return;
   const pcs = o.paket * o.qty;
-  if (state.stock[o.varian] < pcs) {
-    toast(`Stok ${o.varian} kurang (${state.stock[o.varian]} pcs, butuh ${pcs}). Tambah stok dulu di tab Stock.`);
+  if (state.stock < pcs) {
+    toast(`Stok dimsum kurang (${state.stock} pcs, butuh ${pcs}). Tambah stok dulu di tab Stock.`);
     return;
   }
   o.status = 'Selesai';
-  state.stock[o.varian] -= pcs;
+  state.stock -= pcs;
   state.stockLog.unshift({
     id: uid(),
     waktu: new Date().toISOString(),
-    varian: o.varian,
     delta: -pcs,
     ket: `Order selesai — ${o.nama} (${o.paket} pcs × ${o.qty})`,
   });
+  // pemasukan tercatat ke Finance saat owner menandai order selesai
   state.finance.push({
     id: uid(),
     tanggal: todayISO(),
@@ -540,7 +545,7 @@ function completeOrder(id) {
   });
   save();
   renderAll();
-  toast(`Order ${o.nama} selesai — stok ${o.varian} −${pcs} pcs, pemasukan ${fmtRp(o.harga)}`);
+  toast(`Order ${o.nama} selesai — stok −${pcs} pcs, pemasukan ${fmtRp(o.harga)} masuk Finance`);
 }
 
 function undoOrder(id) {
@@ -549,11 +554,10 @@ function undoOrder(id) {
   if (!confirm('Kembalikan order ini ke status Baru? Stok dan pemasukan otomatis akan dikembalikan.')) return;
   const pcs = o.paket * o.qty;
   o.status = 'Baru';
-  state.stock[o.varian] += pcs;
+  state.stock += pcs;
   state.stockLog.unshift({
     id: uid(),
     waktu: new Date().toISOString(),
-    varian: o.varian,
     delta: pcs,
     ket: `Pembatalan penyelesaian order — ${o.nama}`,
   });
@@ -578,7 +582,7 @@ function deleteOrder(id) {
     toast('Order selesai tidak bisa dihapus — batalkan penyelesaiannya dulu');
     return;
   }
-  if (!confirm(`Hapus orderan ${o.nama}?`)) return;
+  if (!confirm(`Hapus order ${o.nama}?`)) return;
   state.orders = state.orders.filter((x) => x.id !== id);
   save();
   renderAll();
@@ -596,7 +600,7 @@ function renderOrderKpis() {
   const baru = state.orders.filter((o) => o.status === 'Baru');
   const hariIni = state.orders.filter((o) => o.status === 'Baru' && o.tglAmbil === todayISO());
   const pcsDibutuhkan = baru.reduce((a, o) => a + o.paket * o.qty, 0);
-  const totalStok = VARIAN.reduce((a, v) => a + state.stock[v], 0);
+  const totalStok = state.stock;
   document.getElementById('order-kpis').innerHTML = `
     <div class="kpi"><div class="kpi-label">Order aktif</div><div class="kpi-value">${baru.length}</div></div>
     <div class="kpi"><div class="kpi-label">Diambil hari ini</div><div class="kpi-value">${hariIni.length}</div></div>
@@ -611,19 +615,22 @@ function renderOrders() {
   rows.sort((a, b) => (a.status === 'Baru') === (b.status === 'Baru') ? a.tglAmbil.localeCompare(b.tglAmbil) : a.status === 'Baru' ? -1 : 1);
 
   if (!rows.length) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Belum ada orderan</td></tr>';
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Belum ada order</td></tr>';
     return;
   }
   tbody.innerHTML = rows
     .map((o) => {
       const pcs = o.paket * o.qty;
+      const billBtn = `<button class="btn small" data-bill="${o.id}">Bill</button>`;
       const aksi =
         o.status === 'Baru'
           ? `<button class="btn small primary" data-done="${o.id}">Selesai</button>
+             ${billBtn}
              <button class="btn small" data-cancel="${o.id}">Batal</button>
              <button class="btn small danger" data-del="${o.id}">Hapus</button>`
           : o.status === 'Selesai'
-          ? `<button class="btn small" data-undo="${o.id}">Batalkan selesai</button>`
+          ? `${billBtn}
+             <button class="btn small" data-undo="${o.id}">Batalkan selesai</button>`
           : `<button class="btn small danger" data-del="${o.id}">Hapus</button>`;
       return `<tr>
         <td><strong>${o.nama}</strong></td>
@@ -638,10 +645,162 @@ function renderOrders() {
     })
     .join('');
 
+  tbody.querySelectorAll('[data-bill]').forEach((b) => b.addEventListener('click', () => sendBill(b.dataset.bill)));
   tbody.querySelectorAll('[data-done]').forEach((b) => b.addEventListener('click', () => completeOrder(b.dataset.done)));
   tbody.querySelectorAll('[data-undo]').forEach((b) => b.addEventListener('click', () => undoOrder(b.dataset.undo)));
   tbody.querySelectorAll('[data-cancel]').forEach((b) => b.addEventListener('click', () => cancelOrder(b.dataset.cancel)));
   tbody.querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', () => deleteOrder(b.dataset.del)));
+}
+
+/* ============================ BILL (PDF) ============================ */
+let logoImgPromise;
+function loadLogo() {
+  if (!logoImgPromise) {
+    logoImgPromise = new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        // konversi ke data-URI JPEG: jsPDF meng-embed JPEG apa adanya,
+        // sedangkan elemen <img> di-embed sebagai bitmap mentah (PDF bengkak)
+        const c = document.createElement('canvas');
+        c.width = img.naturalWidth;
+        c.height = img.naturalHeight;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(img, 0, 0);
+        resolve({ data: c.toDataURL('image/jpeg', 0.85), w: c.width, h: c.height });
+      };
+      img.onerror = () => resolve(null); // logo gagal dimuat: bill tetap dibuat tanpa logo
+      img.src = 'mipo-logo.png';
+    });
+  }
+  return logoImgPromise;
+}
+
+// nomor lokal (08xx) → format internasional wa.me (628xx)
+function waNumber(raw) {
+  let n = (raw || '').replace(/\D/g, '');
+  if (n.startsWith('0')) n = '62' + n.slice(1);
+  return n;
+}
+
+async function buildBillPdf(o) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a5' }); // 148 × 210 mm
+  const W = 148;
+  const brand = '#a2502c';
+  const pcs = o.paket * o.qty;
+  const noBill = 'RK-' + o.id.toUpperCase();
+
+  // header terakota
+  doc.setFillColor(brand);
+  doc.rect(0, 0, W, 26, 'F');
+  doc.setTextColor('#ffffff');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.text('RUNNA. KITCHEN', 10, 12);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.text('Dimsum — Mentai · Truffle · Bolognese', 10, 19);
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('BILL', W - 10, 12, { align: 'right' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.text(noBill, W - 10, 19, { align: 'right' });
+
+  // info pemesan
+  doc.setTextColor('#1c1310');
+  doc.setFontSize(10);
+  let y = 38;
+  const row = (label, val) => {
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor('#8f8279');
+    doc.text(label, 10, y);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor('#1c1310');
+    doc.text(String(val), 48, y);
+    y += 7;
+  };
+  row('Nama', o.nama);
+  row('Tgl Pesanan', fmtTgl(o.tglPesan));
+  row('Tgl Pengambilan', fmtTgl(o.tglAmbil));
+  row('Status', o.status);
+
+  // tabel item
+  y += 4;
+  doc.setFillColor('#f3e3da');
+  doc.rect(10, y - 5, W - 20, 8, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.text('Item', 12, y);
+  doc.text('Qty', 92, y, { align: 'right' });
+  doc.text('Subtotal', W - 12, y, { align: 'right' });
+  y += 8;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text(`Dimsum ${o.varian} — paket ${o.paket} pcs`, 12, y);
+  doc.text(`${o.qty}×`, 92, y, { align: 'right' });
+  doc.text(fmtRp(o.harga).replace(/\u00A0/g, ' '), W - 12, y, { align: 'right' });
+  y += 4;
+  doc.setDrawColor('#cbbdb2');
+  doc.line(10, y, W - 10, y);
+  y += 8;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text(`Total (${pcs} pcs)`, 12, y);
+  doc.text(fmtRp(o.harga).replace(/\u00A0/g, ' '), W - 12, y, { align: 'right' });
+
+  // footer: terima kasih + powered by MIPO Group
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor('#8f8279');
+  doc.text('Terima kasih sudah memesan di Runna Kitchen!', W / 2, 178, { align: 'center' });
+  const logo = await loadLogo();
+  doc.setFontSize(7);
+  doc.text('dashboard ini powered by', W / 2, 188, { align: 'center' });
+  if (logo) {
+    const lw = 24, lh = lw * (logo.h / logo.w);
+    doc.addImage(logo.data, 'JPEG', (W - lw) / 2, 191, lw, lh);
+  } else {
+    doc.setFontSize(9);
+    doc.text('MIPO GROUP', W / 2, 195, { align: 'center' });
+  }
+  return { doc, noBill };
+}
+
+async function sendBill(id) {
+  const o = state.orders.find((x) => x.id === id);
+  if (!o) return;
+  if (!window.jspdf) {
+    toast('File jspdf.umd.min.js gagal dimuat — fitur bill tidak tersedia');
+    return;
+  }
+  const { doc, noBill } = await buildBillPdf(o);
+  const fileName = `Bill ${o.nama} ${noBill}.pdf`;
+  const blob = doc.output('blob');
+  const file = new File([blob], fileName, { type: 'application/pdf' });
+
+  // di HP: buka menu share supaya bisa langsung kirim PDF ke WhatsApp
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: fileName });
+      return;
+    } catch (e) {
+      if (e.name === 'AbortError') return; // pengguna menutup menu share
+    }
+  }
+
+  // fallback (laptop/desktop): unduh PDF lalu buka chat WA customer
+  doc.save(fileName);
+  const wa = waNumber(o.wa);
+  if (wa) {
+    const msg = `Halo ${o.nama}, berikut bill pesanan dimsum Anda (${noBill}). Total ${fmtRp(o.harga)}. PDF bill terlampir. Terima kasih! — Runna Kitchen`;
+    window.open(`https://wa.me/${wa}?text=${encodeURIComponent(msg)}`, '_blank');
+    toast('Bill diunduh — lampirkan PDF-nya di chat WA yang terbuka');
+  } else {
+    toast('Bill PDF diunduh. Isi No. WA customer di order agar chat WA terbuka otomatis.');
+  }
 }
 
 /* ---------- harga default paket ---------- */

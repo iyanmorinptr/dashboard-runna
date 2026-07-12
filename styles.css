@@ -441,6 +441,19 @@ tr:hover td { background: var(--ghost-hover); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ---------- footer powered by ---------- */
+.app-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px 28px;
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.4px;
+}
+.app-footer img { height: 26px; width: auto; opacity: 0.85; }
+
 /* ---------- toast ---------- */
 .toast {
   position: fixed;
