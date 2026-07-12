@@ -507,6 +507,19 @@ orderForm.addEventListener('submit', (e) => {
     harga: Number(f.get('harga')),
     status: 'Baru',
   };
+  // stok dimsum langsung terpotong begitu order masuk
+  const pcs = order.paket * order.qty;
+  if (state.stock < pcs) {
+    toast(`Stok dimsum kurang (${state.stock} pcs, butuh ${pcs}). Tambah stok dulu di tab Stock.`);
+    return;
+  }
+  state.stock -= pcs;
+  state.stockLog.unshift({
+    id: uid(),
+    waktu: new Date().toISOString(),
+    delta: -pcs,
+    ket: `Order masuk — ${order.nama} (${order.paket} pcs × ${order.qty})`,
+  });
   state.orders.unshift(order);
   save();
   orderForm.reset();
@@ -514,26 +527,14 @@ orderForm.addEventListener('submit', (e) => {
   orderForm.qty.value = 1;
   syncHargaField();
   renderAll();
-  toast('Order ditambahkan');
+  toast(`Order ditambahkan — stok dimsum −${pcs} pcs`);
 });
 
 function completeOrder(id) {
   const o = state.orders.find((x) => x.id === id);
   if (!o || o.status !== 'Baru') return;
-  const pcs = o.paket * o.qty;
-  if (state.stock < pcs) {
-    toast(`Stok dimsum kurang (${state.stock} pcs, butuh ${pcs}). Tambah stok dulu di tab Stock.`);
-    return;
-  }
   o.status = 'Selesai';
-  state.stock -= pcs;
-  state.stockLog.unshift({
-    id: uid(),
-    waktu: new Date().toISOString(),
-    delta: -pcs,
-    ket: `Order selesai — ${o.nama} (${o.paket} pcs × ${o.qty})`,
-  });
-  // pemasukan tercatat ke Finance saat owner menandai order selesai
+  // stok sudah terpotong saat order masuk; di sini tinggal catat pemasukan
   state.finance.push({
     id: uid(),
     tanggal: todayISO(),
@@ -545,34 +546,40 @@ function completeOrder(id) {
   });
   save();
   renderAll();
-  toast(`Order ${o.nama} selesai — stok −${pcs} pcs, pemasukan ${fmtRp(o.harga)} masuk Finance`);
+  toast(`Order ${o.nama} selesai — pemasukan ${fmtRp(o.harga)} masuk Finance`);
 }
 
 function undoOrder(id) {
   const o = state.orders.find((x) => x.id === id);
   if (!o || o.status !== 'Selesai') return;
-  if (!confirm('Kembalikan order ini ke status Baru? Stok dan pemasukan otomatis akan dikembalikan.')) return;
-  const pcs = o.paket * o.qty;
+  if (!confirm('Kembalikan order ini ke status Baru? Pemasukan otomatis di Finance akan dihapus.')) return;
   o.status = 'Baru';
-  state.stock += pcs;
-  state.stockLog.unshift({
-    id: uid(),
-    waktu: new Date().toISOString(),
-    delta: pcs,
-    ket: `Pembatalan penyelesaian order — ${o.nama}`,
-  });
   state.finance = state.finance.filter((t) => t.orderId !== o.id);
   save();
   renderAll();
   toast('Order dikembalikan ke status Baru');
 }
 
+// stok yang terpotong saat order masuk dikembalikan lagi
+function restoreStockFor(o, alasan) {
+  const pcs = o.paket * o.qty;
+  state.stock += pcs;
+  state.stockLog.unshift({
+    id: uid(),
+    waktu: new Date().toISOString(),
+    delta: pcs,
+    ket: `${alasan} — ${o.nama} (${o.paket} pcs × ${o.qty})`,
+  });
+}
+
 function cancelOrder(id) {
   const o = state.orders.find((x) => x.id === id);
   if (!o || o.status !== 'Baru') return;
   o.status = 'Batal';
+  restoreStockFor(o, 'Order dibatalkan');
   save();
   renderAll();
+  toast(`Order dibatalkan — stok dimsum +${o.paket * o.qty} pcs`);
 }
 
 function deleteOrder(id) {
@@ -583,6 +590,7 @@ function deleteOrder(id) {
     return;
   }
   if (!confirm(`Hapus order ${o.nama}?`)) return;
+  if (o.status === 'Baru') restoreStockFor(o, 'Order dihapus'); // order Batal sudah dikembalikan saat dibatalkan
   state.orders = state.orders.filter((x) => x.id !== id);
   save();
   renderAll();
@@ -604,8 +612,8 @@ function renderOrderKpis() {
   document.getElementById('order-kpis').innerHTML = `
     <div class="kpi"><div class="kpi-label">Order aktif</div><div class="kpi-value">${baru.length}</div></div>
     <div class="kpi"><div class="kpi-label">Diambil hari ini</div><div class="kpi-value">${hariIni.length}</div></div>
-    <div class="kpi"><div class="kpi-label">Pcs dibutuhkan (order aktif)</div><div class="kpi-value">${pcsDibutuhkan}</div>
-      <div class="kpi-note ${pcsDibutuhkan > totalStok ? 'bad' : 'good'}">stok total ${totalStok} pcs ${pcsDibutuhkan > totalStok ? '— kurang!' : '— cukup'}</div></div>`;
+    <div class="kpi"><div class="kpi-label">Pcs dipesan (order aktif)</div><div class="kpi-value">${pcsDibutuhkan}</div>
+      <div class="kpi-note">sisa stok dimsum ${totalStok} pcs</div></div>`;
 }
 
 function renderOrders() {
@@ -758,7 +766,7 @@ async function buildBillPdf(o) {
   doc.text('Terima kasih sudah memesan di Runna Kitchen!', W / 2, 178, { align: 'center' });
   const logo = await loadLogo();
   doc.setFontSize(7);
-  doc.text('dashboard ini powered by', W / 2, 188, { align: 'center' });
+  doc.text('powered by', W / 2, 188, { align: 'center' });
   if (logo) {
     const lw = 24, lh = lw * (logo.h / logo.w);
     doc.addImage(logo.data, 'JPEG', (W - lw) / 2, 191, lw, lh);
