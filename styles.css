@@ -1,7 +1,7 @@
 /* Runna Kitchen dashboard — tema brand terakota, background putih */
 :root {
-  --brand: #a2502c;        /* terakota Runna Kitchen */
-  --brand-strong: #8a4225;
+  --brand: #b4421b;        /* terakota Runna Kitchen */
+  --brand-strong: #933615;
   --brand-tint: #f3e3da;
   --page: #ffffff;
   --surface-1: #ffffff;
@@ -11,16 +11,16 @@
   --grid-line: #e9dfd7;
   --baseline: #cbbdb2;
   --border: rgba(28, 19, 16, 0.10);
-  --series-in: #a2502c;    /* pemasukan — warna brand */
+  --series-in: #b4421b;    /* pemasukan — warna brand */
   --series-out: #2a78d6;   /* pengeluaran */
   --status-good: #0ca30c;
   --status-warning: #8a5a00;
   --status-critical: #d03b3b;
   --delta-good: #006300;
-  --accent: #a2502c;
+  --accent: #b4421b;
   --accent-ink: #ffffff;
-  --ghost-hover: rgba(162, 80, 44, 0.08);
-  --header-bg: #a2502c;
+  --ghost-hover: rgba(180, 66, 27, 0.08);
+  --header-bg: #b4421b;
   --header-ink: #ffffff;
 }
 * { box-sizing: border-box; }
@@ -35,22 +35,12 @@ body {
 }
 svg.ic { width: 18px; height: 18px; flex: none; }
 
-/* ---------- wordmark (logo tekstual) ---------- */
-.wordmark {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 8px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  line-height: 1;
-  white-space: nowrap;
-}
-.wordmark .runna { font-size: 22px; }
-.wordmark .kitchen {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 3px;
-}
+/* ---------- logo brand (gambar asli) ---------- */
+.brand-logo { display: block; width: auto; }
+.logo-topbar { height: 42px; }
+.logo-drawer { height: 48px; }
+.logo-login { height: 96px; }
+.logo-welcome { height: 120px; animation: pop-in 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
 
 /* ---------- header ---------- */
 .topbar {
@@ -64,7 +54,6 @@ svg.ic { width: 18px; height: 18px; flex: none; }
   top: 0;
   z-index: 30;
 }
-.topbar .wordmark { color: var(--header-ink); }
 .topbar .spacer { flex: 1; }
 
 .icon-btn {
@@ -397,9 +386,6 @@ tr:hover td { background: var(--ghost-hover); }
   gap: 28px;
   padding: 24px;
 }
-.login-overlay .wordmark { color: #ffffff; }
-.login-overlay .wordmark .runna { font-size: 40px; }
-.login-overlay .wordmark .kitchen { font-size: 13px; }
 .login-card {
   background: var(--surface-1);
   border-radius: 16px;
@@ -430,9 +416,6 @@ tr:hover td { background: var(--ghost-hover); }
   transition: opacity 0.5s ease;
 }
 .welcome.fade-out { opacity: 0; pointer-events: none; }
-.welcome .wordmark { color: #fff; animation: pop-in 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
-.welcome .wordmark .runna { font-size: 52px; }
-.welcome .wordmark .kitchen { font-size: 15px; }
 .welcome p {
   margin: 0;
   font-size: 16px;

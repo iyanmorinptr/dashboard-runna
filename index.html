@@ -4,15 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Runna Kitchen — Dashboard</title>
-  <link rel="stylesheet" href="styles.css?v=6">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23a2502c'/%3E%3Ctext x='32' y='44' font-family='system-ui,sans-serif' font-size='34' font-weight='800' fill='%23fff' text-anchor='middle'%3ER.%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css?v=7">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23b4421b'/%3E%3Ctext x='32' y='44' font-family='system-ui,sans-serif' font-size='34' font-weight='800' fill='%23fff' text-anchor='middle'%3ER.%3C/text%3E%3C/svg%3E">
 </head>
 <body>
   <header class="topbar">
     <button id="menu-btn" class="icon-btn" aria-label="Buka menu">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
-    <div class="wordmark"><span class="runna">RUNNA<span>.</span></span><span class="kitchen">KITCHEN</span></div>
+    <img class="brand-logo logo-topbar" src="runna-logo.png" alt="Runna Kitchen">
     <div class="spacer"></div>
     <span id="cloud-badge" class="cloud-badge" hidden><span class="dot"></span><span class="cb-text"></span></span>
   </header>
@@ -20,7 +20,7 @@
   <div id="drawer-backdrop" class="drawer-backdrop" hidden></div>
   <aside id="drawer" class="drawer" aria-label="Menu utama">
     <div class="drawer-head">
-      <div class="wordmark"><span class="runna">RUNNA<span>.</span></span><span class="kitchen">KITCHEN</span></div>
+      <img class="brand-logo logo-drawer" src="runna-logo.png" alt="Runna Kitchen">
       <div class="tagline">Dashboard Dimsum — Mentai · Truffle · Bolognese</div>
     </div>
     <nav>
@@ -50,7 +50,7 @@
   </aside>
 
   <div id="login-overlay" class="login-overlay" hidden>
-    <div class="wordmark"><span class="runna">RUNNA<span>.</span></span><span class="kitchen">KITCHEN</span></div>
+    <img class="brand-logo logo-login" src="runna-logo.png" alt="Runna Kitchen">
     <form id="login-form" class="login-card">
       <p>Masuk untuk membuka dashboard</p>
       <input type="email" name="email" placeholder="Email" autocomplete="username" required>
@@ -61,7 +61,7 @@
   </div>
 
   <div id="welcome" class="welcome" hidden>
-    <div class="wordmark"><span class="runna">RUNNA<span>.</span></span><span class="kitchen">KITCHEN</span></div>
+    <img class="brand-logo logo-welcome" src="runna-logo.png" alt="Runna Kitchen">
     <p>Welcome to Runna Dashboard</p>
   </div>
 
@@ -259,6 +259,6 @@
   <script src="supabase.min.js?v=4"></script>
   <script src="jspdf.umd.min.js"></script>
   <script src="config.js?v=4"></script>
-  <script src="app.js?v=6"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>

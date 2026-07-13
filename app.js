@@ -690,6 +690,26 @@ function renderOrders() {
 }
 
 /* ============================ BILL (PDF) ============================ */
+let runnaLogoPromise;
+function loadRunnaLogo() {
+  if (!runnaLogoPromise) {
+    runnaLogoPromise = new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        // JPEG: jsPDF meng-embed-nya langsung (PNG di-embed sebagai bitmap mentah — file bengkak)
+        const c = document.createElement('canvas');
+        c.width = img.naturalWidth;
+        c.height = img.naturalHeight;
+        c.getContext('2d').drawImage(img, 0, 0);
+        resolve({ data: c.toDataURL('image/jpeg', 0.92), w: c.width, h: c.height });
+      };
+      img.onerror = () => resolve(null); // gagal dimuat: kop bill pakai teks
+      img.src = 'runna-logo.png';
+    });
+  }
+  return runnaLogoPromise;
+}
+
 let logoImgPromise;
 function loadLogo() {
   if (!logoImgPromise) {
@@ -725,20 +745,24 @@ async function buildBillPdf(o) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: 'mm', format: 'a5' }); // 148 × 210 mm
   const W = 148;
-  const brand = '#a2502c';
+  const brand = '#b4421b'; // sama persis dengan latar logo asli
   const pcs = o.paket * o.qty;
   const noBill = 'RK-' + o.id.toUpperCase();
 
-  // header terakota
+  // header terakota dengan logo asli
   doc.setFillColor(brand);
   doc.rect(0, 0, W, 26, 'F');
+  const rlogo = await loadRunnaLogo();
+  if (rlogo) {
+    const lh = 17, lw = lh * (rlogo.w / rlogo.h);
+    doc.addImage(rlogo.data, 'JPEG', 9, 4.5, lw, lh);
+  } else {
+    doc.setTextColor('#ffffff');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(18);
+    doc.text('RUNNA. KITCHEN', 10, 14);
+  }
   doc.setTextColor('#ffffff');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(18);
-  doc.text('RUNNA. KITCHEN', 10, 12);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.text('Dimsum — Mentai · Truffle · Bolognese', 10, 19);
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
   doc.text('BILL', W - 10, 12, { align: 'right' });
