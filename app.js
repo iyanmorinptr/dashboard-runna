@@ -52,6 +52,18 @@ if (cloudConfigured) {
 }
 const cloudEnabled = !!db;
 let cloudReady = false;
+if (!cloudConfigured) {
+  setSyncStatus('Cloud: NONAKTIF (config.js kosong / gagal dimuat)');
+} else if (!window.supabase) {
+  setSyncStatus('Cloud: MATI — supabase.min.js gagal dimuat');
+} else if (!db) {
+  setSyncStatus('Cloud: MATI — konfigurasi tidak valid');
+}
+
+function setSyncStatus(txt) {
+  const el = document.getElementById('sync-status');
+  if (el) el.textContent = txt;
+}
 
 function showFatalBanner(msg) {
   const div = document.createElement('div');
@@ -67,6 +79,7 @@ function setCloudBadge(ok) {
   el.className = 'cloud-badge ' + (ok ? 'ok' : 'err');
   const jam = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
   el.querySelector('.cb-text').textContent = (ok ? 'Tersinkron ' : 'Gagal sinkron ') + jam;
+  setSyncStatus((ok ? 'Cloud: tersinkron ' : 'Cloud: GAGAL sinkron ') + jam);
 }
 
 let lastCloudStamp = null; // updated_at terakhir yang sudah dimuat perangkat ini
@@ -133,11 +146,24 @@ async function afterLogin() {
 }
 
 async function initCloud() {
-  const { data } = await db.auth.getSession();
-  if (data && data.session) {
-    afterLogin();
-  } else {
-    document.getElementById('login-overlay').hidden = false;
+  try {
+    const { data } = await db.auth.getSession();
+    if (data && data.session) {
+      setSyncStatus('Cloud: login OK, menunggu sinkron…');
+      afterLogin();
+    } else {
+      setSyncStatus('Cloud: BELUM LOGIN di perangkat ini');
+      document.getElementById('login-overlay').hidden = false;
+    }
+    // kalau sesi berakhir/di-logout dari tempat lain, minta login lagi
+    db.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        setSyncStatus('Cloud: sesi berakhir — login lagi');
+        document.getElementById('login-overlay').hidden = false;
+      }
+    });
+  } catch (e) {
+    setSyncStatus('Cloud: error — ' + e.message);
   }
 }
 
