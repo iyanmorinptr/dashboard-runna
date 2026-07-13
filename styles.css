@@ -151,6 +151,10 @@ svg.ic { width: 18px; height: 18px; flex: none; }
 
 /* ---------- layout ---------- */
 main { max-width: 1100px; margin: 0 auto; padding: 20px 24px 64px; }
+@media (max-width: 520px) {
+  main { padding: 14px 12px 48px; }
+  .card { padding: 12px; }
+}
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
 .page-heading { margin: 4px 0 16px; font-size: 20px; }
@@ -208,6 +212,12 @@ main { max-width: 1100px; margin: 0 auto; padding: 20px 24px 64px; }
   gap: 4px;
   font-size: 12px;
   color: var(--text-secondary);
+  min-width: 0; /* biarkan kolom menyusut di layar sempit */
+}
+.form-grid input,
+.form-grid select {
+  width: 100%;
+  min-width: 0; /* input tanggal punya lebar minimum bawaan yang bikin meluber di HP */
 }
 .form-grid .span-2 { grid-column: span 2; }
 .order-form { grid-template-columns: repeat(4, 1fr); align-items: end; }
@@ -460,4 +470,10 @@ tr:hover td { background: var(--ghost-hover); }
   z-index: 120;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
   max-width: calc(100vw - 48px);
+}
+
+/* ---------- penyesuaian layar HP ---------- */
+@media (max-width: 520px) {
+  .kpi-row { grid-template-columns: 1fr 1fr; }
+  .kpi .kpi-value { font-size: 20px; }
 }

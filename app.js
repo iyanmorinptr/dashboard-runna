@@ -68,8 +68,10 @@ function setCloudBadge(ok) {
   el.querySelector('.cb-text').textContent = ok ? 'Tersinkron' : 'Gagal sinkron';
 }
 
+let lastCloudStamp = null; // updated_at terakhir yang sudah dimuat perangkat ini
+
 async function pullCloud() {
-  const { data, error } = await db.from('app_state').select('data').eq('id', 1).maybeSingle();
+  const { data, error } = await db.from('app_state').select('data, updated_at').eq('id', 1).maybeSingle();
   if (error) {
     setCloudBadge(false);
     toast('Gagal mengambil data dari cloud — coba muat ulang halaman');
@@ -78,9 +80,11 @@ async function pullCloud() {
   if (data && data.data) {
     state = normalizeState(Object.assign(defaultState(), data.data));
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    lastCloudStamp = data.updated_at || null;
   } else {
     // belum ada data di cloud: unggah data perangkat ini sebagai awal
-    await db.from('app_state').upsert({ id: 1, data: state });
+    lastCloudStamp = new Date().toISOString();
+    await db.from('app_state').upsert({ id: 1, data: state, updated_at: lastCloudStamp });
   }
   setCloudBadge(true);
 }
@@ -90,12 +94,30 @@ function pushCloud() {
   if (!cloudReady) return;
   clearTimeout(pushTimer);
   pushTimer = setTimeout(async () => {
+    const stamp = new Date().toISOString();
     const { error } = await db
       .from('app_state')
-      .upsert({ id: 1, data: state, updated_at: new Date().toISOString() });
+      .upsert({ id: 1, data: state, updated_at: stamp });
+    if (!error) lastCloudStamp = stamp;
     setCloudBadge(!error);
     if (error) toast('Gagal sinkron ke cloud — data tetap tersimpan di perangkat ini');
   }, 400);
+}
+
+// cek ringan: kalau ada perubahan dari perangkat lain, tarik data terbaru
+let checkingCloud = false;
+async function checkCloud() {
+  if (!cloudReady || document.hidden || checkingCloud) return;
+  checkingCloud = true;
+  try {
+    const { data, error } = await db.from('app_state').select('updated_at').eq('id', 1).maybeSingle();
+    if (!error && data && data.updated_at && data.updated_at !== lastCloudStamp) {
+      await pullCloud();
+      renderAll();
+    }
+  } finally {
+    checkingCloud = false;
+  }
 }
 
 async function afterLogin() {
@@ -141,13 +163,15 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
   location.reload();
 });
 
-// saat kembali ke tab/aplikasi, ambil data terbaru dari cloud
-window.addEventListener('focus', async () => {
-  if (cloudReady) {
-    await pullCloud();
-    renderAll();
-  }
+// saat kembali ke tab/aplikasi, ambil data terbaru dari cloud.
+// di HP event 'focus' sering tidak terpicu, jadi pakai 'visibilitychange'
+// dan 'online' juga, plus pengecekan berkala tiap 15 detik.
+window.addEventListener('focus', checkCloud);
+window.addEventListener('online', checkCloud);
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) checkCloud();
 });
+setInterval(checkCloud, 15000);
 
 function load() {
   try {
