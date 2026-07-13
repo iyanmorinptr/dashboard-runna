@@ -65,7 +65,8 @@ function setCloudBadge(ok) {
   const el = document.getElementById('cloud-badge');
   el.hidden = false;
   el.className = 'cloud-badge ' + (ok ? 'ok' : 'err');
-  el.querySelector('.cb-text').textContent = ok ? 'Tersinkron' : 'Gagal sinkron';
+  const jam = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+  el.querySelector('.cb-text').textContent = (ok ? 'Tersinkron ' : 'Gagal sinkron ') + jam;
 }
 
 let lastCloudStamp = null; // updated_at terakhir yang sudah dimuat perangkat ini
@@ -171,6 +172,8 @@ window.addEventListener('online', checkCloud);
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) checkCloud();
 });
+// Safari iPhone memulihkan halaman dari back-forward cache tanpa event lain
+window.addEventListener('pageshow', checkCloud);
 setInterval(checkCloud, 15000);
 
 function load() {
